@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Questionário de valores</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:opsz,wght@9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f3ee; --card:#ffffff; --ink:#2b2a28; --muted:#6b6760; --line:#e4dfd6;
+  --accent:#1f6f6b; --accent-soft:#e3f1ef; --accent-ink:#ffffff; --danger:#b3372f;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#1b1a19; --card:#252422; --ink:#ecebe7; --muted:#a8a49c; --line:#3a3835;
+         --accent:#4fb3ab; --accent-soft:#1f3533; --accent-ink:#0f1f1e; --danger:#e4776e; }
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;font-size:16px;line-height:1.55}
+main{max-width:640px;margin:0 auto;padding:24px 16px 140px}
+h1,h2{font-family:"Fraunces",Georgia,serif;font-weight:500;line-height:1.25;margin:0 0 12px}
+h1{font-size:28px} h2{font-size:22px}
+p{margin:0 0 12px}
+.muted{color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+label.field{display:block;font-weight:500;margin:20px 0 6px}
+input[type=text]{width:100%;font:inherit;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
+.check{display:flex;gap:10px;align-items:flex-start;margin-top:18px;font-size:15px}
+.check input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent);flex:none}
+.erro{color:var(--danger);font-size:14px;margin-top:8px;min-height:1em}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:12px 18px}
+button.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:500}
+button:disabled{opacity:.4;cursor:not-allowed}
+.top{margin-bottom:18px}
+.progress{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.progress span{display:block;height:100%;background:var(--accent);transition:width .3s}
+.count{font-size:14px;color:var(--muted);margin-top:8px}
+.opts{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.opt{display:flex;gap:14px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.opt.on{border-color:var(--accent);background:var(--accent-soft)}
+.opt p{margin:0;flex:1;font-size:15px}
+.stepper{display:flex;align-items:center;gap:6px;flex:none}
+.stepper button{width:40px;height:40px;padding:0;font-size:20px;line-height:1;border-radius:50%}
+.stepper output{min-width:26px;text-align:center;font-weight:700;font-size:18px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+.bar-in{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.restante{flex:1;font-size:15px}
+.restante.ok{color:var(--accent);font-weight:500}
+.lista{list-style:none;padding:0;margin:16px 0}
+.lista li{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
+.lista button{padding:4px 10px;font-size:14px}
+.center{text-align:center;padding-top:40px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+
+<script>
+// ================= CONFIGURAÇÃO =================
+const API = "https://script.google.com/macros/s/AKfycbyfOSLWDQ2fZea0RE5yFpNLmpk5syt7evBV4jLNzV8RP7PqBRf_nRmKg8YYo44Zjomf6g/exec";
+const PROFISSIONAL = "Isis";
+const PONTOS = 15;
+const LETRAS = ["A","B","C","D","E","F","G"];
+const CHAVE_LOCAL = "espiral_v1";
+
+// Perguntas na ordem A–G (a mesma da chave de correção)
+const PERGUNTAS = [
+  { t: "Eu gosto de empregos nos quais…", o: [
+    "A lealdade traz mais segurança no trabalho e onde os colaboradores são tratados de forma justa",
+    "Ganho muito dinheiro, onde ninguém me pressiona e onde posso fazer o que quero",
+    "O principal interesse gira em torno da saúde da vida em nosso planeta",
+    "O nosso grupo é forte porque trabalhamos em conjunto e nos sacrificamos uns pelos outros",
+    "O desempenho bem-sucedido acelera a minha carreira e auxilia a minha ascensão dentro da empresa",
+    "Os sentimentos humanos e as necessidades vêm em primeiro lugar, uma vez que dividimos tudo igualmente numa sociedade que cuida de todos",
+    "A visão sistêmica e ampla conta mais do que pessoas, dinheiro, tradições ou soluções rápidas" ]},
+  { t: "Estas palavras e frases são as que melhor me descrevem:", o: [
+    "Um cidadão do mundo, interessado na grande síntese de toda energia, matéria e vida no Universo",
+    "Uma pessoa que ama o poder, que vive o momento e que gosta de ser respeitada pela sua força, inteligência ou pelas suas conquistas",
+    "Uma pessoa sensível que ama a união entre as partes; é supersticiosa e sente os espíritos na natureza, nos objetos e nos animais",
+    "Uma pessoa humana e justa, que acredita que cada pessoa deveria ter as mesmas chances de se desenvolver",
+    "Uma pessoa competitiva que valoriza posses materiais e tecnologia, que pensa de modo pragmático e que busca o sucesso",
+    "Um indivíduo com convicções moralistas fortes, patriota, que tem orgulho de sua própria cultura e muito religioso",
+    "Um indivíduo que não é materialista nem compulsivo. Segue seus ímpetos internos, procura a diversidade e aceita a vida como ela é" ]},
+  { t: "Prefiro uma organização que…", o: [
+    "Trate a todos de acordo com as mesmas regras e que se comprometa a fazer tudo de acordo com as regras",
+    "Me permita usufruir de tudo que posso e que me respeite como mereço",
+    "Se adapte ao meio natural de modo que a forma de organização seja determinada pelas funções atuais",
+    "Esteja ligada a uma rede de informação e que tome decisões baseadas em sistemas naturais de ordem",
+    "Preserve os nossos costumes naturais, que respeite festas típicas anuais e que proteja o nosso grupo, que é muito ligado",
+    "Ajude a garantir a saúde interna e externa de todos os seus colaboradores, de modo que estes se humanizem totalmente",
+    "Pense de modo estratégico e que aja de acordo com a competitividade a fim de ser bem-sucedida em seu nicho" ]},
+  { t: "Remuneração e recompensa deveriam ser decididas de acordo com…", o: [
+    "Aquilo que pessoas como eu precisam para manter o “lobo afastado da porta”",
+    "As contribuições individuais baseadas no conhecimento, nos níveis de competência e no grau de importância para a função",
+    "Aquilo que se consegue obter com suficiente rapidez e nível de importância, já que cada pessoa está sozinha nesse mundo onde um bicho devora o outro",
+    "As necessidades coletivas de toda a sociedade humana, de modo que sejam úteis para todos, ao invés de escolher apenas algumas poucas pessoas",
+    "Aquilo que as pessoas produzem e em que ponto se encontram na escala da carreira",
+    "Aquilo que fomenta o desenvolvimento das perspectivas e dos programas que contribuem para a sobrevivência global",
+    "A necessidade de preservar o nosso status de vida, idade e serviços prestados durante anos, bem como a proteção necessária para dias futuros" ]},
+  { t: "As prioridades da minha própria carreira são determinadas…", o: [
+    "Pelas coisas que permitem que meu grupo de trabalho permaneça unido como uma família",
+    "Pelo que preciso fazer para obter o que quero sem ter que me submeter a outra pessoa ou agir de acordo com um sistema",
+    "Pelo que é justo e certo, uma vez que meu trabalho e minha profissão deveriam refletir o meu lugar adequado dentro da sociedade",
+    "Pelas metas que tracei para conseguir as coisas boas da vida",
+    "Pelo modo como posso me empenhar nas causas da humanidade, reduzindo a fome, a pobreza, o racismo e a violência",
+    "Pelo que eu realmente queria ter realizado, mesmo que isso signifique tomar um rumo totalmente diferente",
+    "Pela necessidade de caminhar com outras pessoas pelo globo todo e trabalhar em prol de uma nova ordem global" ]},
+  { t: "O mundo é…", o: [
+    "Controlado pelo destino e dirigido por uma força superior",
+    "Como uma selva na qual o mais forte e o mais esperto precisam explorar os outros para conseguir sobreviver",
+    "Um elegante sistema de forças que interagem entre si",
+    "Um local mágico cheio de espíritos vivos, onde segurança e proteção existem na comunidade",
+    "Um conjunto de possibilidades e oportunidades ilimitadas para aqueles que se dispõem a correr riscos",
+    "O lar humano no qual partilhamos as experiências da vida",
+    "Um organismo caótico que é impulsionado por diferenças e mudanças, porém sem nenhuma garantia para as mesmas" ]},
+  { t: "Em um mundo ideal…", o: [
+    "Nós nos sentimos seguros porque sabemos que os espíritos de nossos antepassados nos protegem",
+    "Fiz conquistas heroicas e meu nome permanecerá vivo para sempre",
+    "A justiça vence o mal e aquele que acredita recebe a sua justa recompensa",
+    "Alcancei sucesso material e usufruo daquilo que há de melhor no mundo",
+    "Nossas mãos e corações se encontram para crescermos unidos e em paz",
+    "A população se adapta aos recursos naturais que estão ao seu dispor, de modo que cada qual possa aprender a fazer mais com menos esforço",
+    "Tudo o que é vivo mantém a Terra em equilíbrio e harmonia, sendo ela uma parte da ordem cósmica" ]},
+  { t: "Quando me criticam é porque sou…", o: [
+    "Rebelde e egocêntrico demais, uma pessoa que gosta de poder, que adora gerar inquietação e que só pensa em satisfazer os seus sentidos",
+    "Ambicioso e materialista demais, uma natureza de jogador que explora os outros para conseguir vencer",
+    "Abstrato e metafísico demais, uma espécie de andarilho espiritual envolvido em assuntos planetários",
+    "Sensitivo demais e me preocupo demais com as pessoas; um agente social que é cego em relação às realidades da vida",
+    "Rígido e julgador demais, uma pessoa que possui crenças tão arraigadas que a vida se torna apertada, restrita e impiedosa",
+    "Supersticioso e místico demais, uma pessoa que é perseguida e atormentada por magias, espíritos e pelo destino",
+    "Reservado e distante demais, um indivíduo que faz o que precisa fazer, mas que não se compromete nem faz sacrifícios pelo bem dos outros" ]},
+  { t: "Quando realmente estou estressado…", o: [
+    "Procuro entender os meus problemas através da minha fé e das minhas convicções",
+    "Vou direto ao assunto e luto com mais força para sobreviver nesse meu mundo, onde o mais resistente recebe mais",
+    "Tento descobrir por que estou assim e decido conviver com o estresse ou acabar com ele, mesmo que isso signifique mudar completamente o meu estilo de vida",
+    "Entro num outro nível de consciência para transcender os elementos animais que estão gerando o estresse",
+    "Faço alguma coisa para que a sorte sorria novamente para mim e vou para um lugar onde me sinto seguro",
+    "Faço manobras estratégicas para influenciar pessoas e acontecimentos e para colocar a situação novamente sob controle",
+    "Procuro apoio e ajuda de outras pessoas a fim de explorar os meus sentimentos e medos e conseguir lidar com eles" ]},
+  { t: "Meus valores e minhas convicções mais profundas…", o: [
+    "Vêm dos costumes do meu povo e dos meus antepassados",
+    "São as que eu quero que sejam e não são da conta de ninguém além de mim mesmo",
+    "Encontram-se no solo seguro da minha fé e do único caminho verdadeiro",
+    "Nascem a partir da confiança de que temos a força de construir o futuro",
+    "Partem de uma aceitação de nossas necessidades de interdependência e de compartilhamento",
+    "Refletem opiniões muito pessoais daquilo que funciona num mundo complexo em constante mudança",
+    "Fundem as minhas energias com as forças naturais do Universo, independente de tempo e espaço" ]}
+];
+
+// ================= ESTADO =================
+let estado = carregar() || { nome: "", consentimento: false, passo: 0, respostas: PERGUNTAS.map(() => Array(7).fill(0)) };
+const app = document.getElementById("app");
+
+function salvar(){ try{ localStorage.setItem(CHAVE_LOCAL, JSON.stringify(estado)); }catch(e){} }
+function carregar(){ try{ return JSON.parse(localStorage.getItem(CHAVE_LOCAL)); }catch(e){ return null; } }
+function limpar(){ try{ localStorage.removeItem(CHAVE_LOCAL); }catch(e){} }
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function soma(i){ return estado.respostas[i].reduce((a,b) => a + b, 0); }
+
+// ================= TELAS =================
+function render(){
+  const p = estado.passo;
+  if (p === 0) return telaInicio();
+  if (p <= PERGUNTAS.length) return telaPergunta(p - 1);
+  if (p === PERGUNTAS.length + 1) return telaConfirmar();
+  return telaFim();
+}
+
+function telaInicio(){
+  app.innerHTML = `
+    <h1>Questionário de valores</h1>
+    <p class="muted">São ${PERGUNTAS.length} perguntas. Leva cerca de 10 minutos.</p>
+    <div class="card">
+      <p><b>Como responder:</b> em cada pergunta há 7 frases. Você tem <b>${PONTOS} pontos</b> para distribuir entre elas, de acordo com o quanto cada frase combina com você.</p>
+      <p class="muted" style="margin:0">Pode colocar todos os pontos numa frase só, ou espalhar entre várias. Não existe resposta certa ou errada.</p>
+    </div>
+    <label class="field" for="nome">Seu nome completo</label>
+    <input type="text" id="nome" autocomplete="name" value="${esc(estado.nome)}" placeholder="Maria da Silva">
+    <label class="check"><input type="checkbox" id="consent" ${estado.consentimento ? "checked" : ""}>
+      <span>Autorizo o uso das minhas respostas por ${esc(PROFISSIONAL)} exclusivamente para a análise do meu perfil, mantidas em sigilo.</span></label>
+    <p class="erro" id="erro"></p>
+    <button class="pri" data-a="comecar" style="width:100%;margin-top:8px">${estado.respostas.flat().some(v => v > 0) ? "Continuar de onde parei" : "Começar"}</button>`;
+}
+
+function telaPergunta(i){
+  const q = PERGUNTAS[i], r = estado.respostas[i], resto = PONTOS - soma(i);
+  app.innerHTML = `
+    <div class="top">
+      <div class="progress"><span style="width:${(i) / PERGUNTAS.length * 100}%"></span></div>
+      <p class="count">Pergunta ${i + 1} de ${PERGUNTAS.length}</p>
+    </div>
+    <h2>${q.t}</h2>
+    <p class="muted">Distribua ${PONTOS} pontos entre as frases abaixo.</p>
+    <div class="opts">
+      ${q.o.map((txt, j) => `
+        <div class="opt ${r[j] > 0 ? "on" : ""}">
+          <p>${txt}</p>
+          <div class="stepper">
+            <button data-a="menos" data-j="${j}" aria-label="Diminuir" ${r[j] === 0 ? "disabled" : ""}>−</button>
+            <output>${r[j]}</output>
+            <button data-a="mais" data-j="${j}" aria-label="Aumentar" ${resto === 0 ? "disabled" : ""}>+</button>
+          </div>
+        </div>`).join("")}
+    </div>
+    <div class="bar"><div class="bar-in">
+      <div class="restante ${resto === 0 ? "ok" : ""}">${resto === 0 ? "Pronto, 15 pontos distribuídos" : `Faltam <b>${resto}</b> ${resto === 1 ? "ponto" : "pontos"}`}</div>
+      <button data-a="voltar">Voltar</button>
+      <button class="pri" data-a="proxima" ${resto !== 0 ? "disabled" : ""}>Próxima</button>
+    </div></div>`;
+}
+
+function telaConfirmar(){
+  app.innerHTML = `
+    <div class="top"><div class="progress"><span style="width:100%"></span></div></div>
+    <h2>Tudo pronto, ${esc(estado.nome.split(" ")[0])}</h2>
+    <p class="muted">Confira se quer ajustar alguma pergunta antes de enviar.</p>
+    <ul class="lista">
+      ${PERGUNTAS.map((q, i) => `<li><span>${i + 1}. ${q.t}</span><button data-a="ir" data-j="${i + 1}">Editar</button></li>`).join("")}
+    </ul>
+    <p class="erro" id="erro"></p>
+    <div class="bar"><div class="bar-in">
+      <span style="flex:1"></span>
+      <button data-a="voltar">Voltar</button>
+      <button class="pri" data-a="enviar" id="btnEnviar">Enviar respostas</button>
+    </div></div>`;
+}
+
+function telaFim(){
+  app.innerHTML = `
+    <div class="center">
+      <h1>Obrigado!</h1>
+      <p>Suas respostas foram enviadas.</p>
+      <p class="muted">${esc(PROFISSIONAL)} vai conversar com você sobre o resultado.</p>
+    </div>`;
+}
+
+// ================= AÇÕES =================
+app.addEventListener("click", async (ev) => {
+  const b = ev.target.closest("button[data-a]");
+  if (!b || b.disabled) return;
+  const a = b.dataset.a, j = Number(b.dataset.j);
+  const i = estado.passo - 1;
+
+  if (a === "comecar"){
+    const nome = document.getElementById("nome").value.trim();
+    const ok = document.getElementById("consent").checked;
+    const erro = document.getElementById("erro");
+    if (nome.length < 3) { erro.textContent = "Digite seu nome completo para continuar."; return; }
+    if (!ok) { erro.textContent = "Marque a autorização para continuar."; return; }
+    estado.nome = nome; estado.consentimento = true;
+    const primeiraIncompleta = PERGUNTAS.findIndex((_, k) => soma(k) !== PONTOS);
+    estado.passo = primeiraIncompleta === -1 ? PERGUNTAS.length + 1 : primeiraIncompleta + 1;
+    return mudarTela();
+  }
+  if (a === "mais" && soma(i) < PONTOS) { estado.respostas[i][j]++; salvar(); return manterScroll(); }
+  if (a === "menos" && estado.respostas[i][j] > 0) { estado.respostas[i][j]--; salvar(); return manterScroll(); }
+  if (a === "proxima") { estado.passo++; return mudarTela(); }
+  if (a === "voltar") { estado.passo--; return mudarTela(); }
+  if (a === "ir") { estado.passo = j; return mudarTela(); }
+  if (a === "enviar") return enviar(b);
+});
+
+function mudarTela(){ salvar(); render(); window.scrollTo(0, 0); }
+function manterScroll(){ const y = window.scrollY; render(); window.scrollTo(0, y); }
+
+async function enviar(btn){
+  const erro = document.getElementById("erro");
+  erro.textContent = "";
+  btn.disabled = true; btn.textContent = "Enviando…";
+
+  const respostas = {};
+  PERGUNTAS.forEach((_, i) => LETRAS.forEach((l, k) => respostas["Q" + (i + 1) + l] = estado.respostas[i][k]));
+
+  try {
+    const res = await fetch(API, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" }, // evita bloqueio de CORS do Apps Script
+      body: JSON.stringify({ nome: estado.nome, respostas })
+    });
+    const r = await res.json();
+    if (!r.ok) throw new Error(r.erro || "Erro desconhecido");
+    limpar();
+    estado.passo = PERGUNTAS.length + 2;
+    render(); window.scrollTo(0, 0);
+  } catch (e) {
+    erro.textContent = "Não foi possível enviar. Verifique sua internet e tente de novo.";
+    console.error(e);
+    btn.disabled = false; btn.textContent = "Enviar respostas";
+  }
+}
+
+render();
+</script>
+</body>
+</html>
